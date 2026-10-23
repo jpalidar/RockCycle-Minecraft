@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block-by-Block: Rock Cycle Crafting Game</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1d;
+            --panel-bg: #2d2d34;
+            --accent-green: #4caf50;
+            --accent-blue: #2196f3;
+            --accent-red: #f44336;
+            --accent-purple: #9c27b0;
+            --text-color: #ffffff;
+            --border-color: #4a4a52;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--panel-bg);
+            border: 4px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #ffca28;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px #000;
+            font-size: 1.5rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #111;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .panel {
+            background-color: #222226;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            color: #ffca28;
+        }
+
+        .btn {
+            background-color: #3e3e4a;
+            color: white;
+            border: 2px solid #5a5a6a;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+            text-align: left;
+            transition: all 0.2s;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: #5a5a6a;
+            border-color: #fff;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: #2a2a30;
+        }
+
+        .location-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            float: right;
+        }
+
+        .tag-igneous { background-color: var(--accent-red); }
+        .tag-sedimentary { background-color: #ff9800; }
+        .tag-metamorphic { background-color: var(--accent-purple); }
+
+        .inventory-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+            margin: 5px 0 0 0;
+        }
+
+        .inventory-item {
+            background-color: #111;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .quiz-option {
+            background-color: #333;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #555;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .quiz-option:hover {
+            background-color: #444;
+        }
+
+        #log-output {
+            height: 100px;
+            background-color: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: #4af626;
+            margin-top: 10px;
+            line-height: 1.3;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <header>
+        <h1>BLOCK-BY-BLOCK: ROCK CYCLE</h1>
+        <div class="stats-bar">
+            <span>Location: <span id="current-biome" style="color: #ffca28;">Kilauea Volcano</span></span>
+            <span>XP: <span id="xp-display" style="color: #4caf50;">0</span></span>
+            <span>Tools: <span id="tools-count" style="color: #2196f3;">1/5</span></span>
+        </div>
+    </header>
+
+    <div class="grid-layout">
+        <!-- Travel & Biomes -->
+        <div class="panel">
+            <h2>1. Travel Biomes</h2>
+            <button class="btn" onclick="travel('Kilauea Volcano', 'Igneous')">
+                🌋 Kilauea Volcano <span class="location-tag tag-igneous">Igneous</span>
+            </button>
+            <button class="btn" onclick="travel('Grand Canyon', 'Sedimentary')">
+                🏜️ Grand Canyon <span class="location-tag tag-sedimentary">Sedimentary</span>
+            </button>
+            <button class="btn" onclick="travel('Himalayan Roots', 'Metamorphic')">
+                🏔️ Himalayan Roots <span class="location-tag tag-metamorphic">Metamorphic</span>
+            </button>
+        </div>
+
+        <!-- Vocab Shop / Unlocker -->
+        <div class="panel">
+            <h2>2. Vocab Shop (+10 XP)</h2>
+            <div id="quiz-container">
+                <p id="quiz-question" style="font-size: 0.85rem; margin-top: 0;">Click below to load a question!</p>
+                <div id="quiz-options"></div>
+                <button class="btn" id="load-quiz-btn" onclick="loadNewQuestion()" style="margin-top: 5px;">Load Question (+10 XP)</button>
+            </div>
+        </div>
+
+        <!-- Crafting Station -->
+        <div class="panel">
+            <h2>3. Transformation Station</h2>
+            <button class="btn" id="btn-weather" onclick="craft('weather')">
+                🔨 Weather & Erode (Hammer) <br><small>Requires Wooden Hammer | Any Zone</small>
+            </button>
+            <button class="btn" id="btn-lithify" onclick="craft('lithify')" disabled>
+                🧱 Compact & Cement (Compactor) <br><small>Requires Compactor | Sedimentary Zone</small>
+            </button>
+            <button class="btn" id="btn-metamorph" onclick="craft('metamorph')" disabled>
+                🌋 Heat & Pressure (Heat Press) <br><small>Requires Heat Press | Metamorphic Zone</small>
+            </button>
+            <button class="btn" id="btn-melt" onclick="craft('melt')" disabled>
+                🔥 Melt & Cool (Magma Forge) <br><small>Requires Forge | Igneous Zone</small>
+            </button>
+        </div>
+
+        <!-- Inventory -->
+        <div class="panel">
+            <h2>4. Inventory & Unlocks</h2>
+            <strong style="font-size: 0.8rem;">Unlocked Tools:</strong>
+            <div id="unlocked-tools-list" style="font-size: 0.75rem; color: #ffca28; margin-bottom: 8px;">Wooden Hammer</div>
+
+            <strong style="font-size: 0.8rem;">Rock Inventory:</strong>
+            <ul class="inventory-list" id="inventory-display">
+                <!-- Dynamic Items -->
+            </ul>
+        </div>
+
+        <!-- Console Log -->
+        <div class="panel full-width">
+            <h2>Game Log</h2>
+            <div id="log-output">Welcome to Block-by-Block! Answer vocabulary questions to earn XP and unlock tools...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let xp = 0;
+    let currentBiome = 'Kilauea Volcano';
+    let currentZoneType = 'Igneous';
+
+    let inventory = {
+        'Generic Base Rock': 3,
+        'Sediment (Bits)': 0,
+        'Igneous Rock': 0,
+        'Sedimentary Rock': 0,
+        'Metamorphic Rock': 0
+    };
+
+    let tools = {
+        hammer: true,      // Starter/0 XP
+        waterWind: false,  // 20 XP
+        compactor: false,  // 40 XP
+        heatPress: false,  // 60 XP
+        forge: false       // 80 XP
+    };
+
+    const questions = [
+        {
+            q: "What is a natural building block of rocks that forms repeating crystal patterns?",
+            options: ["Mineral", "Magma", "Sediment", "Erosion"],
+            correct: 0
+        },
+        {
+            q: "What is the difference between Magma and Lava?",
+            options: [
+                "Magma is inside Earth; Lava is on Earth's surface.",
+                "Lava is inside Earth; Magma is on Earth's surface.",
+                "Magma is sedimentary; Lava is metamorphic.",
+                "There is no difference."
+            ],
+            correct: 0
+        },
+        {
+            q: "Which step in forming sedimentary rocks GLUES the bits together?",
+            options: ["Weathering", "Deposition", "Compaction", "Cementation"],
+            correct: 3
+        },
+        {
+            q: "What forces change existing rocks into Metamorphic rock without melting them?",
+            options: ["Melting and Cooling", "Heat and Pressure", "Weathering and Erosion", "Freezing"],
+            correct: 1
+        },
+        {
+            q: "Which step MOVES weathered rock bits from one place to another?",
+            options: ["Weathering", "Erosion", "Deposition", "Lithify"],
+            correct: 1
+        }
+    ];
+
+    let currentQuestion = null;
+
+    function log(message) {
+        const logBox = document.getElementById('log-output');
+        logBox.innerHTML += `<br>> ${message}`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function updateUI() {
+        document.getElementById('xp-display').innerText = xp;
+        document.getElementById('current-biome').innerText = currentBiome;
+
+        const invList = document.getElementById('inventory-display');
+        invList.innerHTML = '';
+        for (const [item, count] of Object.entries(inventory)) {
+            invList.innerHTML += `<li class="inventory-item">${item}: <strong>${count}</strong></li>`;
+        }
+
+        let toolNames = [];
+        if (tools.hammer) toolNames.push("Wooden Hammer");
+        if (tools.waterWind) toolNames.push("Water Bucket/Wind Fan");
+        if (tools.compactor) toolNames.push("Compactor Press");
+        if (tools.heatPress) toolNames.push("Heat Press");
+        if (tools.forge) toolNames.push("Magma Forge");
+
+        document.getElementById('tools-count').innerText = `${toolNames.length}/5`;
+        document.getElementById('unlocked-tools-list').innerText = toolNames.join(", ");
+
+        document.getElementById('btn-weather').disabled = !tools.hammer;
+        document.getElementById('btn-lithify').disabled = !(tools.compactor && currentZoneType === 'Sedimentary' && inventory['Sediment (Bits)'] > 0);
+        document.getElementById('btn-metamorph').disabled = !(tools.heatPress && currentZoneType === 'Metamorphic');
+        document.getElementById('btn-melt').disabled = !(tools.forge && currentZoneType === 'Igneous');
+    }
+
+    function travel(biomeName, zoneType) {
+        currentBiome = biomeName;
+        currentZoneType = zoneType;
+        log(`Traveled to <strong>${biomeName}</strong> (${zoneType} Zone).`);
+        updateUI();
+    }
+
+    function checkToolUnlocks() {
+        if (xp >= 20 && !tools.waterWind) {
+            tools.waterWind = true;
+            log("🔓 <strong>UNLOCKED:</strong> Water Bucket & Wind Fan (Erosion & Deposition)!");
+        }
+        if (xp >= 40 && !tools.compactor) {
+            tools.compactor = true;
+            log("🔓 <strong>UNLOCKED:</strong> Compactor Press & Mineral Glue (Compaction & Cementation)!");
+        }
+        if (xp >= 60 && !tools.heatPress) {
+            tools.heatPress = true;
+            log("🔓 <strong>UNLOCKED:</strong> Deep Earth Heat Press (Heat & Pressure)!");
+        }
+        if (xp >= 80 && !tools.forge) {
+            tools.forge = true;
+            log("🔓 <strong>UNLOCKED:</strong> Magma Forge (Melting & Cooling Igneous Rocks)!");
+        }
+    }
+
+    function loadNewQuestion() {
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        currentQuestion = questions[randomIndex];
+
+        document.getElementById('quiz-question').innerText = currentQuestion.q;
+        const optionsContainer = document.getElementById('quiz-options');
+        optionsContainer.innerHTML = '';
+
+        currentQuestion.options.forEach((opt, idx) => {
+            optionsContainer.innerHTML += `
+                <div class="quiz-option" onclick="answerQuestion(${idx})">${opt}</div>
+            `;
+        });
+
+        document.getElementById('load-quiz-btn').style.display = 'none';
+    }
+
+    function answerQuestion(selectedIdx) {
+        if (selectedIdx === currentQuestion.correct) {
+            xp += 10;
+            log(`✅ <strong>Correct!</strong> Earned +10 XP. (Total: ${xp} XP)`);
+            checkToolUnlocks();
+        } else {
+            log(`❌ Incorrect answer. Try another question!`);
+        }
+
+        document.getElementById('quiz-question').innerText = "Click below to load a question!";
+        document.getElementById('quiz-options').innerHTML = '';
+        document.getElementById('load-quiz-btn').style.display = 'block';
+        updateUI();
+    }
+
+    function craft(process) {
+        if (process === 'weather') {
+            let rockType = null;
+            if (inventory['Generic Base Rock'] > 0) rockType = 'Generic Base Rock';
+            else if (inventory['Igneous Rock'] > 0) rockType = 'Igneous Rock';
+            else if (inventory['Metamorphic Rock'] > 0) rockType = 'Metamorphic Rock';
+            else if (inventory['Sedimentary Rock'] > 0) rockType = 'Sedimentary Rock';
+
+            if (rockType) {
+                inventory[rockType]--;
+                inventory['Sediment (Bits)'] += 2;
+                log(`🔨 Weathered and eroded 1x ${rockType} into 2x <strong>Sediment (Bits)</strong>! (+25 XP)`);
+                xp += 25;
+            } else {
+                log(`⚠️ No rocks available to weather!`);
+            }
+        } 
+        else if (process === 'lithify') {
+            if (inventory['Sediment (Bits)'] > 0) {
+                inventory['Sediment (Bits)']--;
+                inventory['Sedimentary Rock']++;
+                log(`🧱 Compacted and cemented Sediment into 1x <strong>Sedimentary Rock</strong>! (+25 XP)`);
+                xp += 25;
+            }
+        } 
+        else if (process === 'metamorph') {
+            let rockType = null;
+            if (inventory['Sedimentary Rock'] > 0) rockType = 'Sedimentary Rock';
+            else if (inventory['Igneous Rock'] > 0) rockType = 'Igneous Rock';
+            else if (inventory['Generic Base Rock'] > 0) rockType = 'Generic Base Rock';
+
+            if (rockType) {
+                inventory[rockType]--;
+                inventory['Metamorphic Rock']++;
+                log(`🌋 Applied intense Heat & Pressure to ${rockType}, forming 1x <strong>Metamorphic Rock</strong>! (+25 XP)`);
+                xp += 25;
+            } else {
+                log(`⚠️ No suitable rock found to metamorphose!`);
+            }
+        } 
+        else if (process === 'melt') {
+            let rockType = null;
+            if (inventory['Sedimentary Rock'] > 0) rockType = 'Sedimentary Rock';
+            else if (inventory['Metamorphic Rock'] > 0) rockType = 'Metamorphic Rock';
+            else if (inventory['Generic Base Rock'] > 0) rockType = 'Generic Base Rock';
+            else if (inventory['Igneous Rock'] > 0) rockType = 'Igneous Rock';
+
+            if (rockType) {
+                inventory[rockType]--;
+                inventory['Igneous Rock']++;
+                log(`🔥 Melted ${rockType} into Magma/Lava and cooled it into 1x <strong>Igneous Rock</strong>! (+25 XP)`);
+                xp += 25;
+            } else {
+                log(`⚠️ No rock available to melt!`);
+            }
+        }
+
+        checkToolUnlocks();
+        updateUI();
+    }
+
+    checkToolUnlocks();
+    updateUI();
+</script>
+</body>
+</html>
